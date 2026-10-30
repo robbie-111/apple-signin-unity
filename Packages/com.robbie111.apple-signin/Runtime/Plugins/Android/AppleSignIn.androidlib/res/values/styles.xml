@@ -1,0 +1,6 @@
+<resources>
+    <style name="AppleSignInCallbackTheme" parent="android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+</resources>

@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.robbie.applesignin">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application>
+        <activity android:name="com.robbie.applesignin.AppleSignInCallbackActivity"
+            android:exported="true" android:launchMode="singleTop"
+            android:excludeFromRecents="true" android:theme="@style/AppleSignInCallbackTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="signinwithapple" android:host="callback" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

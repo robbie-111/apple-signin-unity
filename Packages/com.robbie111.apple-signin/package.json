@@ -1,0 +1,28 @@
+{
+  "name": "com.robbie111.apple-signin",
+  "version": "0.1.0",
+  "displayName": "Apple Sign-In for Unity",
+  "description": "AppleAuth와 EDM4U 기반 Unity Apple 로그인 패키지입니다.",
+  "unity": "2022.3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robbie-111/apple-signin-unity.git"
+  },
+  "keywords": [
+    "apple",
+    "signin",
+    "authentication"
+  ],
+  "dependencies": {
+    "com.unity.test-framework": "2.0.1-exp.2",
+    "com.lupidan.apple-signin-unity": "1.5.0",
+    "com.google.external-dependency-manager": "1.2.190"
+  },
+  "samples": [
+    {
+      "displayName": "SignIn Sample",
+      "description": "uGUI와 레거시 Text 기반 로그인·결과 표시 샘플입니다. Unity uGUI 패키지가 필요합니다.",
+      "path": "Samples~/SignInSample"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "name": "Robbie111.AppleSignIn.Sample",
+  "references": ["Robbie111.AppleSignIn", "Unity.ugui"]
+}

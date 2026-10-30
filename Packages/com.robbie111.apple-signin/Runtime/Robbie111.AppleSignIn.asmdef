@@ -1,0 +1,7 @@
+{
+  "name": "Robbie111.AppleSignIn",
+  "references": [
+    "AppleAuth"
+  ],
+  "includePlatforms": []
+}

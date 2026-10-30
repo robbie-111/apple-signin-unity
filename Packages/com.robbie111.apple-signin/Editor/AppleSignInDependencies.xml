@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dependencies>
+  <androidPackages>
+    <!-- Custom Tabs for Android Apple sign-in. Keep in sync with the compileOnly version in AppleSignInAndroidBuildProcessor. -->
+    <androidPackage spec="androidx.browser:browser:1.5.0" />
+  </androidPackages>
+</dependencies>

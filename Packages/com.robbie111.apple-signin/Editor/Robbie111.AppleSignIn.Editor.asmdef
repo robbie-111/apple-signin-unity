@@ -1,0 +1,10 @@
+{
+  "name": "Robbie111.AppleSignIn.Editor",
+  "references": [
+    "Robbie111.AppleSignIn",
+    "AppleAuth.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

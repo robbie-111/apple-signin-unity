@@ -1,0 +1,2 @@
+-keep class com.robbie.applesignin.AppleSignInBridge { public *; }
+-keep class com.robbie.applesignin.AppleSignInCallbackActivity { *; }
