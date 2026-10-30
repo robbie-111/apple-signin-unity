@@ -1,0 +1,13 @@
+{
+  "name": "Robbie111.AppleSignIn.Tests.Editor",
+  "references": [
+    "Robbie111.AppleSignIn",
+    "Robbie111.AppleSignIn.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

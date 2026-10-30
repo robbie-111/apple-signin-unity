@@ -1,0 +1,57 @@
+# The repository root is NOT a Unity project. Only SampleProject/ is.
+# Generated folders are anchored to it explicitly.
+/SampleProject/[Ll]ibrary/
+/SampleProject/[Tt]emp/
+/SampleProject/[Oo]bj/
+/SampleProject/[Bb]uild/
+/SampleProject/[Bb]uilds/
+/SampleProject/[Ll]ogs/
+/SampleProject/[Uu]ser[Ss]ettings/
+/SampleProject/[Mm]emoryCaptures/
+/SampleProject/[Rr]ecordings/
+/SampleProject/.utmp/
+
+# IDE / editor
+.vs/
+.idea/
+.gradle/
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity generated meta files for the above
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Crash reports
+sysinfo.txt
+crashlytics-build.properties
+
+# Build outputs
+/SampleProject/demo_mapping.txt
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# Signing material must never be committed
+*.keystore
+*.jks
+
+### macOS ###
+.DS_Store
+._*
