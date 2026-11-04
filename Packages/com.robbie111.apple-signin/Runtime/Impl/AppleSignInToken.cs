@@ -12,7 +12,7 @@ namespace Robbie111.AppleSignIn.Impl
         [Serializable]
         private sealed class StatePayload
         {
-            public int version = 1;
+            public int version = 1; // RedirectServer와 맞추는 state 형식 버전. 서버 해석이 바뀔 때만 올린다.
             public string applicationId;
             public string random;
         }
@@ -21,7 +21,7 @@ namespace Robbie111.AppleSignIn.Impl
         [Serializable]
         private sealed class LoopbackStatePayload
         {
-            public int version = 1;
+            public int version = 1; // StatePayload와 같은 번호를 쓴다(서버는 한 형식으로 읽음).
             public string applicationId;
             public string random;
             public int port;
@@ -81,11 +81,7 @@ namespace Robbie111.AppleSignIn.Impl
                     throw new FormatException(
                         $"Identity token claims missing (sub length={claims?.sub?.Length ?? 0}, aud length={claims?.aud?.Length ?? 0}).");
                 if (claims.nonce != expectedNonce)
-                {
-                    UnityEngine.Debug.LogError(
-                        $"Identity token nonce mismatch (token nonce length={claims.nonce?.Length ?? 0}).");
                     return AppleSignInResult.Failure(AppleSignInErrorCode.NonceMismatch, "Token nonce mismatch.");
-                }
 
                 if (!string.IsNullOrEmpty(expectedAudience) && claims.aud != expectedAudience)
                 {
@@ -94,8 +90,6 @@ namespace Robbie111.AppleSignIn.Impl
                     return AppleSignInResult.Failure(AppleSignInErrorCode.InvalidResponse, "Token audience mismatch.");
                 }
 
-                UnityEngine.Debug.Log(
-                    $"Identity token claims accepted (aud={claims.aud}, code length={code?.Length ?? 0}).");
                 return AppleSignInResult.Success(claims.sub, token, code, claims.aud);
             }
             catch (Exception e)
@@ -119,9 +113,6 @@ namespace Robbie111.AppleSignIn.Impl
 
         internal AppleSignInResult ToResult(string id, string expectedState, string expectedNonce, string audience)
         {
-            UnityEngine.Debug.Log(
-                $"Callback received (request={id}, state length={state?.Length ?? 0}, id_token length={id_token?.Length ?? 0}, " +
-                $"code length={code?.Length ?? 0}, error={(string.IsNullOrEmpty(error) ? "-" : error)}, nativeError={(string.IsNullOrEmpty(nativeError) ? "-" : nativeError)}).");
             if (!string.IsNullOrEmpty(nativeError))
             {
                 if (!Enum.TryParse(nativeError, out AppleSignInErrorCode errorCode) ||
@@ -132,24 +123,16 @@ namespace Robbie111.AppleSignIn.Impl
                     errorCode = AppleSignInErrorCode.InternalError;
                 }
 
-                UnityEngine.Debug.LogError(
-                    $"Android sign-in failed natively (request={id}, error={errorCode}). See logcat tag AppleSignIn for details.");
                 return AppleSignInResult.Failure(errorCode, "Android sign-in failed: " + errorCode);
             }
 
             if (string.IsNullOrEmpty(state) || state != expectedState)
-            {
-                UnityEngine.Debug.LogError($"Callback state mismatch (request={id}, received length={state?.Length ?? 0}).");
                 return AppleSignInResult.Failure(AppleSignInErrorCode.StateMismatch, "Callback state mismatch.");
-            }
 
             if (!string.IsNullOrEmpty(error))
             {
                 if (error == "user_cancelled_authorize" || error == "popup_closed_by_user" || error == "access_denied")
-                {
-                    UnityEngine.Debug.LogWarning($"Apple reported user cancellation (request={id}, error={error}).");
                     return AppleSignInResult.Canceled();
-                }
 
                 UnityEngine.Debug.LogError($"Apple authorization returned an error (request={id}, error={error}).");
                 return AppleSignInResult.Failure(AppleSignInErrorCode.ProviderError, "Apple authorization failed.");
@@ -160,26 +143,13 @@ namespace Robbie111.AppleSignIn.Impl
 
         internal static AppleSignInCallback Parse(string json)
         {
-            if (string.IsNullOrEmpty(json))
-            {
-                UnityEngine.Debug.LogError("Callback payload is empty.");
-                return null;
-            }
-
-            if (json.Length > 65536)
-            {
-                UnityEngine.Debug.LogError($"Callback payload is too large (length={json.Length}).");
-                return null;
-            }
-
+            if (string.IsNullOrEmpty(json) || json.Length > 65536) return null;
             try
             {
                 return JsonUtility.FromJson<AppleSignInCallback>(json);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                UnityEngine.Debug.LogError(
-                    $"Could not parse callback payload (length={json.Length}): {e.GetType().Name}: {e.Message}");
                 return null;
             }
         }

@@ -2,7 +2,7 @@
   "name": "com.robbie111.apple-signin",
   "version": "0.1.0",
   "displayName": "Apple Sign-In for Unity",
-  "description": "AppleAuth와 EDM4U 기반 Unity Apple 로그인 패키지입니다.",
+  "description": "Sign in with Apple for Unity using AppleAuth and Unity External Dependency Manager.",
   "unity": "2022.3",
   "repository": {
     "type": "git",
@@ -16,12 +16,12 @@
   "dependencies": {
     "com.unity.test-framework": "2.0.1-exp.2",
     "com.lupidan.apple-signin-unity": "1.5.0",
-    "com.google.external-dependency-manager": "1.2.190"
+    "com.unity.external-dependency-manager": "2.1.1"
   },
   "samples": [
     {
       "displayName": "SignIn Sample",
-      "description": "uGUI와 레거시 Text 기반 로그인·결과 표시 샘플입니다. Unity uGUI 패키지가 필요합니다.",
+      "description": "A sign-in and result display sample using uGUI and legacy Text components. Requires the Unity uGUI package.",
       "path": "Samples~/SignInSample"
     }
   ]

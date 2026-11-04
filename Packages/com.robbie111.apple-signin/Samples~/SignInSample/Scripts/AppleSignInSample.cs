@@ -19,11 +19,11 @@ namespace Robbie111.AppleSignIn.Samples
         {
             _lifetime = new CancellationTokenSource();
             _signInButton.onClick.AddListener(SignIn);
-            _platformText.text = "플랫폼: " + Application.platform;
+            _platformText.text = "Platform: " + Application.platform;
             var configured = HasConfiguration();
             _signInButton.interactable = configured;
-            Show(configured ? "준비" : "설정 필요", configured ? "Apple 계정으로 로그인하세요." :
-                "Inspector에서 Client Id와 HTTPS Redirect Uri를 설정한 뒤 다시 실행하세요.", false);
+            Show(configured ? "Ready" : "Configuration required", configured ? "Sign in with your Apple account." :
+                "Set Client Id and HTTPS Redirect Uri in the Inspector, then run again.", false);
         }
 
         private bool HasConfiguration()
@@ -41,7 +41,7 @@ namespace Robbie111.AppleSignIn.Samples
             if (_attempt != null || _lifetime == null) return;
             var attempt = _attempt = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
             _signInButton.interactable = false;
-            Show("로그인 중", "인증 화면에서 로그인한 뒤 게임으로 돌아오세요.", false);
+            Show("Signing in...", "Complete sign-in, then return to the game.", false);
             try
             {
                 if (AppleSignIn.Configuration == null)
@@ -49,17 +49,17 @@ namespace Robbie111.AppleSignIn.Samples
                 var result = await AppleSignIn.DefaultInstance.SignInAsync(attempt.Token);
                 if (!this || !isActiveAndEnabled) return;
                 if (result.IsSuccess)
-                    Show("성공", "UserId: " + result.UserId + "\nAudience: " + result.Audience +
-                        "\nIdToken: 수신됨\nAuthorizationCode: " +
-                        (string.IsNullOrEmpty(result.AuthorizationCode) ? "없음" : "수신됨"), false);
+                    Show("Success", "UserId: " + result.UserId + "\nAudience: " + result.Audience +
+                        "\nIdToken: received\nAuthorizationCode: " +
+                        (string.IsNullOrEmpty(result.AuthorizationCode) ? "none" : "received"), false);
                 else if (result.Status == AppleSignInStatus.Canceled)
-                    Show("취소", "로그인이 취소되었습니다.", false);
-                else Show("실패", "오류: " + result.ErrorCode + "\n" + result.ErrorMessage, true);
+                    Show("Canceled", "Sign-in was canceled.", false);
+                else Show("Failed", "Error: " + result.ErrorCode + "\n" + result.ErrorMessage, true);
             }
             catch (OperationCanceledException)
-            { if (this && isActiveAndEnabled) Show("취소", "로그인 대기를 취소했습니다.", false); }
+            { if (this && isActiveAndEnabled) Show("Canceled", "Stopped waiting for sign-in.", false); }
             catch (Exception e)
-            { if (this && isActiveAndEnabled) Show("실패", e is ArgumentException ? "Client Id와 Redirect Uri 설정을 확인하세요." : "로그인을 시작할 수 없습니다: " + e.GetType().Name, true); }
+            { if (this && isActiveAndEnabled) Show("Failed", e is ArgumentException ? "Check the Client Id and Redirect Uri settings." : "Could not start sign-in: " + e.GetType().Name, true); }
             finally
             {
                 if (_attempt == attempt)
@@ -74,7 +74,7 @@ namespace Robbie111.AppleSignIn.Samples
 
         private void Show(string status, string detail, bool error)
         {
-            _statusText.text = "상태: " + status;
+            _statusText.text = "Status: " + status;
             _statusText.color = error ? new Color32(0xFF, 0x3B, 0x30, 0xFF) : new Color32(0x1D, 0x1D, 0x1F, 0xFF);
             _detailText.text = detail;
         }

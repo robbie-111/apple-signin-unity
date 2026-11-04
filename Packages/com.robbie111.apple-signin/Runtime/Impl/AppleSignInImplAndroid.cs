@@ -32,11 +32,8 @@ namespace Robbie111.AppleSignIn.Impl
         public async Task<AppleSignInResult> SignInAsync(CancellationToken cancellationToken)
         {
             if (_pending != null)
-            {
-                UnityEngine.Debug.LogWarning($"Sign-in already in progress (request={_requestId}).");
                 return AppleSignInResult.Failure(AppleSignInErrorCode.AlreadyInProgress,
                     "Apple sign-in is already in progress.");
-            }
 
             var id = _requestId = Guid.NewGuid().ToString("N");
             _state = AppleSignInToken.CreateState(Application.identifier);
@@ -44,28 +41,18 @@ namespace Robbie111.AppleSignIn.Impl
             _leftApp = false;
             var pending = _pending =
                 new TaskCompletionSource<AppleSignInResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-            UnityEngine.Debug.Log($"Sign-in started (request={id}, applicationId={Application.identifier}).");
             using (var timeout = new CancellationTokenSource(_timeout))
-            using (timeout.Token.Register(() =>
-                   {
-                       if (pending.TrySetResult(AppleSignInResult.Failure(AppleSignInErrorCode.Timeout,
-                               "Apple sign-in timed out.")))
-                           UnityEngine.Debug.LogWarning(
-                               $"Sign-in timed out (request={id}, timeout={_timeout.TotalSeconds}s).");
-                   }))
+            using (timeout.Token.Register(() => pending.TrySetResult(
+                       AppleSignInResult.Failure(AppleSignInErrorCode.Timeout, "Apple sign-in timed out."))))
             using (cancellationToken.Register(() => pending.TrySetCanceled(cancellationToken)))
             {
                 try
                 {
                     // An already-canceled caller token completes pending above; don't open the browser then.
                     if (!pending.Task.IsCompleted)
-                    {
-                        UnityEngine.Debug.Log(
-                            $"Calling Java signIn (request={id}, receiver={AppleSignInHelperObject.ObjectName}).");
                         using (var bridge = Bridge())
                             bridge.CallStatic("signIn", id, _clientId, _redirectUri, _state, _nonce,
                                 AppleSignInHelperObject.ObjectName);
-                    }
                 }
                 catch (Exception e)
                 {
@@ -86,10 +73,9 @@ namespace Robbie111.AppleSignIn.Impl
                     {
                         using (var bridge = Bridge()) bridge.CallStatic("cancel", id);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         // Unity/Android may already be shutting down.
-                        UnityEngine.Debug.LogWarning($"Java cancel failed (request={id}): {e.GetType().Name}: {e.Message}");
                     }
                 }
             }
@@ -104,22 +90,17 @@ namespace Robbie111.AppleSignIn.Impl
             if (paused)
             {
                 _leftApp = true;
-                UnityEngine.Debug.Log($"App paused during sign-in (request={id}).");
                 return;
             }
 
             if (!_leftApp) return;
-            UnityEngine.Debug.Log($"App resumed; waiting {ReturnGraceMilliseconds}ms for the callback (request={id}).");
             await Task.Delay(ReturnGraceMilliseconds);
             if (_requestId != id || _pauseCount != count) return;
             try
             {
                 using (var bridge = Bridge())
                     if (bridge.CallStatic<bool>("hasCallback", id))
-                    {
-                        UnityEngine.Debug.Log($"Callback already delivered after resume (request={id}).");
                         return;
-                    }
 
                 UnityEngine.Debug.LogWarning(
                     $"Returned to the app without a callback; completing as canceled (request={id}). " +
@@ -162,10 +143,7 @@ namespace Robbie111.AppleSignIn.Impl
 
         private void OnDestroyed()
         {
-            if (_pending == null) return;
-            UnityEngine.Debug.LogWarning(
-                $"Shutting down with sign-in in progress; completing as canceled (request={_requestId}).");
-            _pending.TrySetResult(AppleSignInResult.Canceled());
+            _pending?.TrySetResult(AppleSignInResult.Canceled());
         }
 
         private static AndroidJavaClass Bridge() => new AndroidJavaClass("com.robbie.applesignin.AppleSignInBridge");

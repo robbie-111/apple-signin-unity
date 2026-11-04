@@ -21,19 +21,13 @@ namespace Robbie111.AppleSignIn.Impl
             DontDestroyOnLoad(go);
             go.hideFlags = HideFlags.HideInHierarchy;
             _instance = go.AddComponent<AppleSignInHelperObject>();
-            UnityEngine.Debug.Log($"Callback receiver '{ObjectName}' created.");
         }
 
         private void Update() => Updated?.Invoke();
         private void OnApplicationPause(bool paused) => Paused?.Invoke(paused);
-        [Preserve] public void OnAppleSignInCallback(string json)
-        {
-            UnityEngine.Debug.Log($"Native callback message received (length={json?.Length ?? 0}).");
-            CallbackReceived?.Invoke(json);
-        }
+        [Preserve] public void OnAppleSignInCallback(string json) => CallbackReceived?.Invoke(json);
         private void OnDestroy()
         {
-            UnityEngine.Debug.Log($"Callback receiver '{ObjectName}' destroyed.");
             if (_instance == this) _instance = null;
             Destroyed?.Invoke();
         }

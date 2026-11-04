@@ -18,7 +18,7 @@ namespace Robbie111.AppleSignIn.Editor
     internal static class AppleSignInAndroidGradle
     {
         private const string Marker = "// Apple Sign-In dependencies";
-        // androidx.browser and android.useAndroidX are provided by EDM4U (AppleSignInDependencies.xml).
+        // androidx.browser and android.useAndroidX are provided by Unity EDM (AppleSignInDependencies.xml).
         // Only the androidlib module's own Gradle setup is patched here.
         internal static void Apply(string path)
         {
@@ -47,7 +47,7 @@ android {
     }
 }
 dependencies {
-    // Compile-time only: EDM4U adds the runtime dependency to unityLibrary.
+    // Compile-time only: Unity EDM adds the runtime dependency to unityLibrary.
     compileOnly 'androidx.browser:browser:1.5.0'
     compileOnly fileTree(dir: '../libs', include: ['*.jar'])
 }

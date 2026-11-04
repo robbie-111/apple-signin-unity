@@ -22,7 +22,6 @@ namespace Robbie111.AppleSignIn.Impl
         private readonly string _clientId, _redirectUri;
         private readonly TimeSpan _timeout;
         private TaskCompletionSource<AppleSignInResult> _pending;
-        private string _requestId;
 
         internal AppleSignInImplEditor(AppleSignInConfiguration configuration)
         {
@@ -40,13 +39,10 @@ namespace Robbie111.AppleSignIn.Impl
         public async Task<AppleSignInResult> SignInAsync(CancellationToken cancellationToken)
         {
             if (_pending != null)
-            {
-                UnityEngine.Debug.LogWarning($"Sign-in already in progress (request={_requestId}).");
                 return AppleSignInResult.Failure(AppleSignInErrorCode.AlreadyInProgress,
                     "Apple sign-in is already in progress.");
-            }
 
-            var id = _requestId = Guid.NewGuid().ToString("N");
+            var id = Guid.NewGuid().ToString("N");
             var listener = new HttpListener();
             int port;
             try
@@ -59,7 +55,6 @@ namespace Robbie111.AppleSignIn.Impl
             {
                 UnityEngine.Debug.LogError($"Could not start the loopback listener (request={id}): {e}");
                 listener.Close();
-                _requestId = null;
                 return AppleSignInResult.Failure(AppleSignInErrorCode.InternalError,
                     "Could not start the local callback listener.");
             }
@@ -68,16 +63,9 @@ namespace Robbie111.AppleSignIn.Impl
             var nonce = AppleSignInToken.CreateNonce();
             var pending = _pending =
                 new TaskCompletionSource<AppleSignInResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-            UnityEngine.Debug.Log($"Sign-in started (request={id}, applicationId={Application.identifier}, " +
-                                 $"callback=http://127.0.0.1:{port}{CallbackPath}).");
             using (var timeout = new CancellationTokenSource(_timeout))
-            using (timeout.Token.Register(() =>
-                   {
-                       if (pending.TrySetResult(AppleSignInResult.Failure(AppleSignInErrorCode.Timeout,
-                               "Apple sign-in timed out.")))
-                           UnityEngine.Debug.LogWarning(
-                               $"Sign-in timed out (request={id}, timeout={_timeout.TotalSeconds}s).");
-                   }))
+            using (timeout.Token.Register(() => pending.TrySetResult(
+                       AppleSignInResult.Failure(AppleSignInErrorCode.Timeout, "Apple sign-in timed out."))))
             using (cancellationToken.Register(() => pending.TrySetCanceled(cancellationToken)))
             {
                 try
@@ -87,7 +75,6 @@ namespace Robbie111.AppleSignIn.Impl
                     {
                         _ = ReceiveAsync(listener, id, state, nonce, _clientId, pending);
                         Application.OpenURL(LoginPageUrl(state, nonce));
-                        UnityEngine.Debug.Log($"Opened the system browser (request={id}).");
                     }
                 }
                 catch (Exception e)
@@ -103,14 +90,8 @@ namespace Robbie111.AppleSignIn.Impl
                 }
                 finally
                 {
-                    if (_pending == pending)
-                    {
-                        _pending = null;
-                        _requestId = null;
-                    }
-
+                    if (_pending == pending) _pending = null;
                     listener.Close();
-                    UnityEngine.Debug.Log($"Loopback listener closed (request={id}).");
                 }
             }
         }
@@ -146,8 +127,6 @@ namespace Robbie111.AppleSignIn.Impl
 
                     if (request.HttpMethod != "GET" || request.Url.AbsolutePath != CallbackPath)
                     {
-                        UnityEngine.Debug.Log(
-                            $"Ignored request (request={id}, method={request.HttpMethod}, path={request.Url.AbsolutePath}).");
                         Reply(context, 404, "Not found");
                         continue;
                     }
@@ -157,7 +136,6 @@ namespace Robbie111.AppleSignIn.Impl
                     {
                         if (query.GetValues(key)?.Length > 1)
                         {
-                            UnityEngine.Debug.LogError($"Callback rejected: duplicate '{key}' parameter (request={id}).");
                             Reply(context, 400, ResultPage(false));
                             pending.TrySetResult(AppleSignInResult.Failure(AppleSignInErrorCode.InvalidResponse,
                                 "Duplicate callback parameter."));
@@ -186,9 +164,7 @@ namespace Robbie111.AppleSignIn.Impl
 
         private void Cancel()
         {
-            if (_pending == null) return;
-            UnityEngine.Debug.LogWarning($"Shutting down with sign-in in progress; completing as canceled (request={_requestId}).");
-            _pending.TrySetResult(AppleSignInResult.Canceled());
+            _pending?.TrySetResult(AppleSignInResult.Canceled());
         }
 
         // Convention: the login page is the RedirectUri's sibling path, e.g. .../apple-auth-redirect -> .../apple-auth-login.
@@ -227,12 +203,12 @@ namespace Robbie111.AppleSignIn.Impl
         }
 
         private static string ResultPage(bool success) =>
-            "<!doctype html><html lang='ko'><head><meta charset='utf-8'>" +
-            "<meta name='viewport' content='width=device-width, initial-scale=1'><title>Apple 로그인</title>" +
+            "<!doctype html><html lang='en'><head><meta charset='utf-8'>" +
+            "<meta name='viewport' content='width=device-width, initial-scale=1'><title>Sign in with Apple</title>" +
             "<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;" +
             "background:#f5f5f7;color:#1d1d1f}main{padding:32px;background:#fff;border-radius:16px;text-align:center}</style>" +
-            "</head><body><main><h1>" + (success ? "로그인 완료" : "로그인 실패") + "</h1><p>" +
-            (success ? "이 창을 닫고 게임으로 돌아가세요." : "게임으로 돌아가 다시 시도해 주세요.") +
+            "</head><body><main><h1>" + (success ? "Sign-in complete" : "Sign-in failed") + "</h1><p>" +
+            (success ? "You can close this window and return to the game." : "Return to the game and try again.") +
             "</p></main><script>history.replaceState(null,'','/');</script></body></html>";
     }
 }

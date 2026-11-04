@@ -24,7 +24,7 @@ if (result.IsSuccess)
 
 Unity 메인 스레드에서 호출한다. 별도 Initialize, 프리팹, Update 호출은 필요 없다. Android·iOS·Editor·Standalone 외 플랫폼에서는 DefaultInstance 접근 시 InvalidOperationException이 발생한다. DefaultInstance 최초 접근 시 설정을 검증·복사하며 이후 교체할 수 없다. 설정 객체를 나중에 변경해도 인스턴스에는 반영되지 않는다.
 
-Android는 Services ID와 Apple에 등록된 HTTPS Return URL이 필요하다. callback은 `signinwithapple://callback`이며 Manifest에 자동 등록된다. 서버는 `package=`로 앱을 지정한 intent URL로 돌려보낸다. 별도 AAR 제작 없이 포함된 Java 소스를 빌드한다. AndroidX Browser 1.5.0은 EDM4U(External Dependency Manager, 패키지 의존성으로 함께 설치)가 `Editor/AppleSignInDependencies.xml`을 읽어 추가한다. Gradle 의존성 해결을 위해 Player Settings에서 Custom Main Gradle Template과 Custom Gradle Properties Template을 켜 두는 것을 권장한다. Custom Tabs 미지원 시 브라우저 기본 fallback을 사용한다.
+Android는 Services ID와 Apple에 등록된 HTTPS Return URL이 필요하다. callback은 `signinwithapple://callback`이며 Manifest에 자동 등록된다. 서버는 `package=`로 앱을 지정한 intent URL로 돌려보낸다. 별도 AAR 제작 없이 포함된 Java 소스를 빌드한다. AndroidX Browser 1.5.0은 Unity 공식 EDM(External Dependency Manager, 패키지 의존성으로 함께 설치)이 `Editor/AppleSignInDependencies.xml`을 읽어 추가한다. Gradle 의존성 해결을 위해 Player Settings에서 Custom Main Gradle Template과 Custom Gradle Properties Template을 켜 두는 것을 권장한다. Custom Tabs 미지원 시 브라우저 기본 fallback을 사용한다.
 
 Editor와 Windows/macOS/Linux Standalone은 Android와 같은 설정(ClientId, RedirectUri)을 사용한다. 시스템 브라우저로 RedirectServer의 로그인 페이지(RedirectUri와 같은 경로의 `apple-auth-login`)를 열고, 페이지가 Apple JS SDK 팝업으로 로그인한 결과를 `http://127.0.0.1:{빈 포트}/callback`의 로컬 HttpListener로 받는다. 팝업 방식이라 Apple 화면의 취소와 팝업 닫기도 Canceled로 감지한다(authorize URL 직접 이동 방식은 취소를 어디에도 알리지 않는다). 브라우저 탭이나 브라우저 자체를 닫으면 감지할 수 없어 타임아웃까지 기다린다. RedirectServer가 아래 "Editor·데스크톱 로그인 페이지"를 제공해야 동작한다. Editor에서는 Play 모드에서만 동작하며 Play 종료·스크립트 리로드 시 Canceled로 끝난다.
 
@@ -94,16 +94,18 @@ Services ID의 Domains에 서버 도메인이 등록되어 있어야 한다. 앱
 
 ## 공개 패키지 설치
 
-프로젝트 폴더에서 다음 명령으로 OpenUPM 의존성과 레지스트리를 설정합니다.
+프로젝트 폴더에서 다음 명령으로 AppleAuth용 OpenUPM 의존성과 레지스트리를 설정합니다.
 
 ```sh
-openupm add com.lupidan.apple-signin-unity@1.5.0 com.google.external-dependency-manager@1.2.190
+openupm add com.lupidan.apple-signin-unity@1.5.0
 ```
+
+`com.unity.external-dependency-manager` `2.1.1`은 패키지 의존성으로 선언되어 있어 Unity Registry에서 자동 설치됩니다. 기존 Google EDM4U를 사용하는 SDK가 함께 설치되어 있다면 해당 의존성을 먼저 확인하고, **Assets → External Dependency Manager → Change To Unity's EDM**에서 Unity EDM을 선택합니다.
 
 iOS는 공개 AppleAuth 1.5.0을 사용합니다. 사내 로깅 패키지 대신 UnityEngine.Debug를 사용합니다. RedirectUri 기본값은 없으므로 브라우저 로그인 전에 반드시 지정합니다.
 
 샘플은 현재 uGUI와 레거시 Text 화면을 사용하며 로그인 버튼과 플랫폼·상태·결과 표시를 제공합니다. 토큰과 인증 코드는 원문 대신 수신 여부를 표시합니다.
 
-Android 샘플을 Editor에서 빌드하기 전 **Tools → Apple Sign-In → Configure Android Templates**를 실행하고 **Assets → External Dependency Manager → Android Resolver → Force Resolve**로 의존성을 해결합니다. 제공된 CLI 빌드 유틸리티는 Gradle 템플릿 설정을 적용합니다.
+Android 빌드 전 **Player Settings → Android → Publishing Settings**에서 **Custom Main Gradle Template**, **Custom Gradle Properties Template**, **Custom Gradle Settings Template**을 활성화하고 **Assets → External Dependency Manager → Android Resolver → Force Resolve**로 의존성을 해결합니다. 제공된 샘플에는 해당 템플릿과 설정이 이미 포함되어 있습니다. 샘플 빌드는 Unity 기본 빌드 화면을 사용합니다.
 
 iOS 내보내기 후 CocoaPods workspace가 생성되면 `Unity-iPhone.xcworkspace`를 열어 빌드합니다.

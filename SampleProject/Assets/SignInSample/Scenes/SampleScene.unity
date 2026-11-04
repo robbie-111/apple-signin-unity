@@ -351,7 +351,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "플랫폼: 실행 시 표시"
+  m_Text: "Platform: shown at runtime"
 --- !u!222 &643047810
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -696,7 +696,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "상태: 준비"
+  m_Text: "Status: Ready"
 --- !u!222 &1422926808
 CanvasRenderer:
   m_ObjectHideFlags: 0

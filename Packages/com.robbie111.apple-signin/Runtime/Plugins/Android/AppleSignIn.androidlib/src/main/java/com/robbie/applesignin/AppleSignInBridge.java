@@ -27,27 +27,19 @@ public final class AppleSignInBridge {
                               String state, String nonce, String gameObject) {
         Activity activity = UnityPlayer.currentActivity;
         synchronized (AppleSignInBridge.class) {
-            if (requestId != null) {
-                Log.w(TAG, "signIn rejected: request " + requestId + " is still running (new=" + id + ")");
-                throw new IllegalStateException("Sign-in already running");
-            }
+            if (requestId != null) throw new IllegalStateException("Sign-in already running");
             requestId = id;
             expectedState = state;
             receiver = gameObject;
             callbackReceived = false;
         }
-        Log.i(TAG, "signIn start (request=" + id + ", client_id=" + clientId +
-            ", redirect_uri=" + redirectUri + ", receiver=" + gameObject + ")");
         if (activity == null) {
             Log.e(TAG, "signIn failed: UnityPlayer.currentActivity is null (request=" + id + ")");
             fail(id, "InternalError");
             return;
         }
         activity.runOnUiThread(() -> {
-            if (!isActive(id)) {
-                Log.w(TAG, "signIn skipped on UI thread: request " + id + " is no longer active");
-                return;
-            }
+            if (!isActive(id)) return;
             try {
                 Uri callback = Uri.parse(CALLBACK_SCHEME + "://callback");
                 Intent probe = new Intent(Intent.ACTION_VIEW, callback).setPackage(activity.getPackageName());
@@ -76,9 +68,7 @@ public final class AppleSignInBridge {
                     .appendQueryParameter("nonce", nonce).build();
                 new CustomTabsIntent.Builder().setShareState(CustomTabsIntent.SHARE_STATE_OFF)
                     .build().launchUrl(activity, uri);
-                Log.i(TAG, "Custom Tab launched (request=" + id + ")");
             } catch (ActivityNotFoundException e) {
-                Log.e(TAG, "signIn failed: no browser can open the Apple authorize URL (request=" + id + ")", e);
                 fail(id, "BrowserUnavailable");
             } catch (Exception e) {
                 Log.e(TAG, "signIn failed: unexpected exception (request=" + id + ")", e);
@@ -92,11 +82,7 @@ public final class AppleSignInBridge {
         return id.equals(requestId) && callbackReceived;
     }
     public static synchronized void cancel(String id) {
-        if (!id.equals(requestId)) {
-            Log.d(TAG, "cancel ignored: request " + id + " is not active (active=" + requestId + ")");
-            return;
-        }
-        Log.d(TAG, "cancel (request=" + id + ", callbackReceived=" + callbackReceived + ")");
+        if (!id.equals(requestId)) return;
         requestId = null; expectedState = null; receiver = null; callbackReceived = false;
     }
 
@@ -126,14 +112,11 @@ public final class AppleSignInBridge {
         try {
             for (String key : new String[]{"state", "id_token", "code", "error"}) {
                 if (uri.getQueryParameters(key).size() > 1) {
-                    Log.e(TAG, "callback rejected: duplicate '" + key + "' parameter (request=" + requestId + ")");
                     fail(requestId, "InvalidResponse");
                     return true;
                 }
             }
-            int length = uri.toString().length();
-            if (length > 65536) {
-                Log.e(TAG, "callback rejected: URI too long (" + length + " chars, request=" + requestId + ")");
+            if (uri.toString().length() > 65536) {
                 fail(requestId, "InvalidResponse");
                 return true;
             }
@@ -142,9 +125,6 @@ public final class AppleSignInBridge {
             for (String key : new String[]{"state", "id_token", "code", "error"})
                 payload.put(key, uri.getQueryParameter(key));
             callbackReceived = true;
-            String error = uri.getQueryParameter("error");
-            Log.i(TAG, "callback accepted (request=" + requestId + ", id_token=" + describe(uri.getQueryParameter("id_token")) +
-                ", code=" + describe(uri.getQueryParameter("code")) + ", error=" + (error == null ? "-" : error) + ")");
             send(payload.toString());
             return true;
         } catch (Exception e) {
@@ -155,25 +135,18 @@ public final class AppleSignInBridge {
     }
 
     private static synchronized void fail(String id, String error) {
-        if (id == null || !id.equals(requestId) || callbackReceived) {
-            Log.w(TAG, "fail(" + error + ") ignored (request=" + id + ", active=" + requestId +
-                ", callbackReceived=" + callbackReceived + ")");
-            return;
-        }
-        Log.e(TAG, "sign-in failed natively: " + error + " (request=" + id + ")");
+        if (id == null || !id.equals(requestId) || callbackReceived) return;
         try {
             JSONObject payload = new JSONObject();
             payload.put("requestId", id); payload.put("nativeError", error);
             callbackReceived = true;
             send(payload.toString());
         } catch (org.json.JSONException impossible) {
-            Log.e(TAG, "could not build failure payload", impossible);
             throw new IllegalStateException(impossible);
         }
     }
 
     private static void send(String json) {
-        Log.d(TAG, "UnitySendMessage -> " + receiver + ".OnAppleSignInCallback (length=" + json.length() + ")");
         UnityPlayer.UnitySendMessage(receiver, "OnAppleSignInCallback", json);
     }
 
