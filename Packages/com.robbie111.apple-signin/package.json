@@ -1,6 +1,6 @@
 {
   "name": "com.robbie111.apple-signin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Apple Sign-In for Unity",
   "description": "Sign in with Apple for Unity using AppleAuth and Unity External Dependency Manager.",
   "unity": "2022.3",

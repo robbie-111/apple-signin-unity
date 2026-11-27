@@ -59,13 +59,15 @@ public final class AppleSignInBridge {
                     fail(id, "InvalidConfiguration");
                     return;
                 }
-                Uri uri = Uri.parse("https://appleid.apple.com/auth/authorize").buildUpon()
+                Uri.Builder builder = Uri.parse("https://appleid.apple.com/auth/authorize").buildUpon()
                     .appendQueryParameter("client_id", clientId)
                     .appendQueryParameter("redirect_uri", redirectUri)
                     .appendQueryParameter("response_type", "code id_token")
                     .appendQueryParameter("response_mode", "form_post")
-                    .appendQueryParameter("state", state)
-                    .appendQueryParameter("nonce", nonce).build();
+                    .appendQueryParameter("state", state);
+                // nonce is null when AppleSignInConfiguration.UseNonce is false; omit it instead of sending "null".
+                if (nonce != null && !nonce.isEmpty()) builder.appendQueryParameter("nonce", nonce);
+                Uri uri = builder.build();
                 new CustomTabsIntent.Builder().setShareState(CustomTabsIntent.SHARE_STATE_OFF)
                     .build().launchUrl(activity, uri);
             } catch (ActivityNotFoundException e) {

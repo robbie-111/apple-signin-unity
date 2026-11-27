@@ -10,6 +10,10 @@ namespace Robbie111.AppleSignIn
         public string RedirectUri { get; set; }
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(180);
 
+        // When true, each request sends a fresh nonce to Apple and checks the token's nonce claim.
+        // Set false only if your server rejects identity tokens that carry a nonce.
+        public bool UseNonce { get; set; } = true;
+
         // Browser-based flows (Android, Editor/desktop) send ClientId and RedirectUri to Apple.
         internal void ValidateForBrowser()
         {

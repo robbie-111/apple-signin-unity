@@ -12,6 +12,7 @@ namespace Robbie111.AppleSignIn.Impl
         private const int ReturnGraceMilliseconds = 500;
         private readonly string _clientId, _redirectUri;
         private readonly TimeSpan _timeout;
+        private readonly bool _useNonce;
         private TaskCompletionSource<AppleSignInResult> _pending;
         private string _requestId, _state, _nonce;
         private bool _leftApp;
@@ -23,6 +24,7 @@ namespace Robbie111.AppleSignIn.Impl
             _clientId = configuration.ClientId;
             _redirectUri = configuration.RedirectUri;
             _timeout = configuration.Timeout;
+            _useNonce = configuration.UseNonce;
             AppleSignInHelperObject.EnsureCreated();
             AppleSignInHelperObject.Paused += OnPause;
             AppleSignInHelperObject.CallbackReceived += OnCallback;
@@ -37,7 +39,7 @@ namespace Robbie111.AppleSignIn.Impl
 
             var id = _requestId = Guid.NewGuid().ToString("N");
             _state = AppleSignInToken.CreateState(Application.identifier);
-            _nonce = AppleSignInToken.CreateNonce();
+            _nonce = AppleSignInToken.CreateNonce(_useNonce);
             _leftApp = false;
             var pending = _pending =
                 new TaskCompletionSource<AppleSignInResult>(TaskCreationOptions.RunContinuationsAsynchronously);

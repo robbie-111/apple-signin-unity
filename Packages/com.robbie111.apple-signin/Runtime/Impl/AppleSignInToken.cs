@@ -50,6 +50,9 @@ namespace Robbie111.AppleSignIn.Impl
             return Encode(bytes);
         }
 
+        // null when nonce is disabled: nothing is sent to Apple and Parse skips the claim check.
+        internal static string CreateNonce(bool enabled) => enabled ? CreateNonce() : null;
+
         internal static string Encode(byte[] bytes) =>
             Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
@@ -80,7 +83,7 @@ namespace Robbie111.AppleSignIn.Impl
                 if (claims == null || string.IsNullOrEmpty(claims.sub) || string.IsNullOrEmpty(claims.aud))
                     throw new FormatException(
                         $"Identity token claims missing (sub length={claims?.sub?.Length ?? 0}, aud length={claims?.aud?.Length ?? 0}).");
-                if (claims.nonce != expectedNonce)
+                if (!string.IsNullOrEmpty(expectedNonce) && claims.nonce != expectedNonce)
                     return AppleSignInResult.Failure(AppleSignInErrorCode.NonceMismatch, "Token nonce mismatch.");
 
                 if (!string.IsNullOrEmpty(expectedAudience) && claims.aud != expectedAudience)

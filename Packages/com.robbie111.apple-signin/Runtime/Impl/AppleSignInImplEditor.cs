@@ -21,6 +21,7 @@ namespace Robbie111.AppleSignIn.Impl
         private const string CallbackPath = "/callback";
         private readonly string _clientId, _redirectUri;
         private readonly TimeSpan _timeout;
+        private readonly bool _useNonce;
         private TaskCompletionSource<AppleSignInResult> _pending;
 
         internal AppleSignInImplEditor(AppleSignInConfiguration configuration)
@@ -29,6 +30,7 @@ namespace Robbie111.AppleSignIn.Impl
             _clientId = configuration.ClientId;
             _redirectUri = configuration.RedirectUri;
             _timeout = configuration.Timeout;
+            _useNonce = configuration.UseNonce;
             AppleSignInHelperObject.EnsureCreated();
             AppleSignInHelperObject.Destroyed += Cancel;
 #if UNITY_EDITOR
@@ -60,7 +62,7 @@ namespace Robbie111.AppleSignIn.Impl
             }
 
             var state = AppleSignInToken.CreateState(Application.identifier, port);
-            var nonce = AppleSignInToken.CreateNonce();
+            var nonce = AppleSignInToken.CreateNonce(_useNonce);
             var pending = _pending =
                 new TaskCompletionSource<AppleSignInResult>(TaskCreationOptions.RunContinuationsAsynchronously);
             using (var timeout = new CancellationTokenSource(_timeout))
@@ -173,10 +175,10 @@ namespace Robbie111.AppleSignIn.Impl
             var redirect = new Uri(_redirectUri);
             var path = redirect.AbsolutePath;
             var loginPath = path.Substring(0, path.LastIndexOf('/') + 1) + "apple-auth-login";
-            return redirect.GetLeftPart(UriPartial.Authority) + loginPath +
-                   "?client_id=" + Uri.EscapeDataString(_clientId) +
-                   "&state=" + Uri.EscapeDataString(state) +
-                   "&nonce=" + Uri.EscapeDataString(nonce);
+            var url = redirect.GetLeftPart(UriPartial.Authority) + loginPath +
+                      "?client_id=" + Uri.EscapeDataString(_clientId) +
+                      "&state=" + Uri.EscapeDataString(state);
+            return string.IsNullOrEmpty(nonce) ? url : url + "&nonce=" + Uri.EscapeDataString(nonce);
         }
 
         private static int FreeLoopbackPort()

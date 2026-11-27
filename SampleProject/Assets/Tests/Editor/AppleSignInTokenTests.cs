@@ -25,5 +25,27 @@ namespace Robbie111.AppleSignIn.Tests.Editor
             Assert.That(AppleSignInToken.Decode(nonce).Length, Is.EqualTo(32));
             Assert.That(nonce, Is.Not.EqualTo(AppleSignInToken.CreateNonce()));
         }
+        [Test] public void DisabledNonceIsNull() => Assert.That(AppleSignInToken.CreateNonce(false), Is.Null);
+
+        private static string Token(string payloadJson) =>
+            "eyJhbGciOiJSUzI1NiJ9." + AppleSignInToken.Encode(Encoding.UTF8.GetBytes(payloadJson)) + ".sig";
+
+        [Test] public void ParseSkipsNonceCheckWhenNotRequested()
+        {
+            var result = AppleSignInToken.Parse(Token("{\"sub\":\"user\",\"aud\":\"app\"}"), "code", null, null);
+            Assert.That(result.Status, Is.EqualTo(AppleSignInStatus.Success));
+        }
+        [Test] public void ParseAcceptsMatchingNonce()
+        {
+            var result = AppleSignInToken.Parse(Token("{\"sub\":\"user\",\"aud\":\"app\",\"nonce\":\"n1\"}"), "code", "n1", null);
+            Assert.That(result.Status, Is.EqualTo(AppleSignInStatus.Success));
+        }
+        [TestCase("{\"sub\":\"user\",\"aud\":\"app\",\"nonce\":\"other\"}")]
+        [TestCase("{\"sub\":\"user\",\"aud\":\"app\"}")]
+        public void ParseRejectsMismatchedOrMissingNonce(string payload)
+        {
+            var result = AppleSignInToken.Parse(Token(payload), "code", "n1", null);
+            Assert.That(result.ErrorCode, Is.EqualTo(AppleSignInErrorCode.NonceMismatch));
+        }
     }
 }

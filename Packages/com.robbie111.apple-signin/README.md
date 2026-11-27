@@ -50,7 +50,7 @@ Apple authorize endpoint에 `client_id`, HTTPS `redirect_uri`, `response_type=co
 {"version":1,"applicationId":"com.robbie.game","random":"로그인마다 생성하는 32자리 GUID"}
 ```
 
-앱은 state 문자열 전체를 보관한다. applicationId는 Android 실제 packageName과 같은 Unity Application.identifier다. nonce는 별도의 암호학적 난수이며 SHA256 변환 없이 Apple에 전달한 문자열과 token claim을 비교한다.
+앱은 state 문자열 전체를 보관한다. applicationId는 Android 실제 packageName과 같은 Unity Application.identifier다. nonce는 별도의 암호학적 난수이며 SHA256 변환 없이 Apple에 전달한 문자열과 token claim을 비교한다. `AppleSignInConfiguration.UseNonce`(기본 `true`)를 `false`로 두면 모든 플랫폼에서 nonce를 만들지 않는다. 이때 Android authorize URL과 Editor 로그인 페이지 URL에는 `nonce` 파라미터가 빠지고, iOS 네이티브 요청에도 nonce가 들어가지 않으며, token의 nonce claim은 검사하지 않는다. nonce가 포함된 토큰을 거절하는 서버를 위한 옵션이다.
 
 ### 서버가 구현할 응답
 
@@ -69,11 +69,11 @@ Editor·Standalone의 state에는 로컬 수신 포트가 추가된다.
 {"version":1,"applicationId":"com.robbie.game","random":"32자리 GUID","port":51234}
 ```
 
-앱은 `GET {RedirectUri와 같은 경로}/apple-auth-login?client_id=…&state=…&nonce=…`를 시스템 브라우저로 연다. 서버는 다음을 구현한다.
+앱은 `GET {RedirectUri와 같은 경로}/apple-auth-login?client_id=…&state=…&nonce=…`를 시스템 브라우저로 연다(`UseNonce=false`면 `nonce` 생략). 서버는 다음을 구현한다.
 
 1. state를 위와 같이 검사하고 `port`(1024–65535)를 필수로 확인한다.
 2. `Cache-Control: no-store` HTML을 응답한다. 값은 HTML/JS 이스케이프해서 넣는다.
-3. 페이지는 `https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/ko_KR/appleid.auth.js`를 불러오고, 사용자가 버튼을 누르면(팝업 차단 회피) `AppleID.auth.init({ clientId, scope: '', redirectURI: <등록된 /apple-auth-redirect>, state, nonce, usePopup: true })` 후 `AppleID.auth.signIn()`을 호출한다.
+3. 페이지는 `https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/ko_KR/appleid.auth.js`를 불러오고, 사용자가 버튼을 누르면(팝업 차단 회피) `AppleID.auth.init({ clientId, scope: '', redirectURI: <등록된 /apple-auth-redirect>, state, nonce, usePopup: true })` 후 `AppleID.auth.signIn()`을 호출한다. query에 `nonce`가 없으면(`UseNonce=false`) init에서도 nonce를 생략한다.
 4. 성공하면 `authorization`의 `state`, `id_token`, `code`를, 실패하면 `state`와 `error`(`user_cancelled_authorize`, `popup_closed_by_user` 등)를 query로 `http://127.0.0.1:{port}/callback`에 이동한다. query 규칙은 위 4번과 같다.
 
 Services ID의 Domains에 서버 도메인이 등록되어 있어야 한다. 앱은 루프백 주소에서 온 `GET /callback`만 받고, 브라우저에 완료 페이지를 돌려준 뒤 리스너를 닫는다. 토큰이 루프백 URL 쿼리로 전달되므로 브라우저 기록에 남을 수 있고, 같은 PC의 다른 프로세스가 포트를 선점할 수 있다. 게임 서버 검증이 필수다.

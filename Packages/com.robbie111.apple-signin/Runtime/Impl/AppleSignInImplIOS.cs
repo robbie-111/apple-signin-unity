@@ -15,6 +15,7 @@ namespace Robbie111.AppleSignIn.Impl
     internal sealed class AppleSignInImplIOS : IAppleSignInImpl
     {
         private readonly TimeSpan _timeout;
+        private readonly bool _useNonce;
 
         private readonly IAppleAuthManager _manager;
 
@@ -24,6 +25,7 @@ namespace Robbie111.AppleSignIn.Impl
         internal AppleSignInImplIOS(AppleSignInConfiguration configuration)
         {
             _timeout = configuration.Timeout;
+            _useNonce = configuration.UseNonce;
             if (!AppleAuthManager.IsCurrentPlatformSupported) return;
 
             _manager = new AppleAuthManager(new PayloadDeserializer());
@@ -44,7 +46,7 @@ namespace Robbie111.AppleSignIn.Impl
 
             var id = Guid.NewGuid().ToString("N");
             var state = AppleSignInToken.CreateState(Application.identifier);
-            var nonce = AppleSignInToken.CreateNonce();
+            var nonce = AppleSignInToken.CreateNonce(_useNonce);
             var pending = _pending =
                 new TaskCompletionSource<AppleSignInResult>(TaskCreationOptions.RunContinuationsAsynchronously);
             using (var timeout = new CancellationTokenSource(_timeout))
